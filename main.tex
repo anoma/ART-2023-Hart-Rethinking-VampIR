@@ -1,25 +1,20 @@
-\documentclass{msc}
-\usepackage{listings}
-\newcommand{\vampir}{Vamp-IR}
-\input{preambule}
+\documentclass[
+    9pt,            % 8-20pt possible
+    techreport,        % select between  ``techreport'', ``report'', ``article'', ``commun'', ``persp'' and ``review''
+    affiltop,       % switch, put affiliations under authors (instead of footnote)
+    % draft,          % for quick compilations (no figures, references etc)
+]{art}
+
+\input{metadata.tex}
+\input{macros.tex}
+
 \begin{document}
-\input{metadata}
 
-\begin{abstract}
-This paper provides an overview of \VampIR{} v0.1.3 and outlines potential modifications for future versions. Specifically, it contains proposals for streamlined versions of the fresh function and constraint generation, a proposal for removing the type system, and a short proposal for dealing with imports. It ends with an overview of implementation improvements made in light of the Haskell port.
-\end{abstract}
-
-\begin{keywords}
-VampIR;
-Arithmetic Circuits;
-Compilers;
-Proposals;
-\end{keywords}
 \maketitle
 
-\section{Current \vampir}
+\section{Current \VampIR{}}
 
-If we were to retroactively turn \vampir\ into a calculus, we could describe its syntax as follows.
+If we were to retroactively turn \VampIR{}\ into a calculus, we could describe its syntax as follows.
 
 \begin{align*}
     \text{VampIR} ::=&\ \text{Arith} \\
@@ -42,9 +37,9 @@ If we were to retroactively turn \vampir\ into a calculus, we could describe its
     \text{v} \in&\ \text{string}
 \end{align*}
 
-Here $\mathbb{F}$ is the field associated with the circuit. $\text{VampIR}^+$ is the same as $\text{VampIR}$, except $\text{op}$ can also be $\%$ or $\div$, which represent the non-field operations of modulus and integer division. Also note that the real \vampir\ lacks built-in $\text{fst}$, $\text{snd}$, $\text{hd}$, and $\text{tl}$ operations. Instead, such operations are implemented via pattern matching, however, since pattern matching can only be done on tuples and lists, this ends up being equivalent to what I present here.
+Here $\mathbb{F}$ is the field associated with the circuit. $\text{VampIR}^+$ is the same as $\text{VampIR}$, except $\text{op}$ can also be $\%$ or $\div$, which represent the non-field operations of modulus and integer division. Also note that the real \VampIR{}\ lacks built-in $\text{fst}$, $\text{snd}$, $\text{hd}$, and $\text{tl}$ operations. Instead, such operations are implemented via pattern matching, however, since pattern matching can only be done on tuples and lists, this ends up being equivalent to what I present here.
 
-\vampir\ has a simple type system. The syntax of types can be defined as;
+\VampIR{}\ has a simple type system. The syntax of types can be defined as;
 
 \begin{align*}
     \text{Type} ::=&\ v \\
@@ -55,13 +50,13 @@ Here $\mathbb{F}$ is the field associated with the circuit. $\text{VampIR}^+$ is
     |\ &\ \mathbb{F} \\
 \end{align*}
 
-\vampir\ relies on a notion of first-order type for some determinations. The set of first-order types can be defined inductively as follows;
+\VampIR{}\ relies on a notion of first-order type for some determinations. The set of first-order types can be defined inductively as follows;
 
 \begin{align*}
     1st := () + \mathbb{F} + [1st] + 1st \times 1st
 \end{align*}
 
-The type-checking rules of \vampir\ are;
+The type-checking rules of \VampIR{}\ are;
 
 \begin{align*}
     \frac{x : T \quad y : U}{(x;\ y) : U} \quad
@@ -84,11 +79,11 @@ The type-checking rules of \vampir\ are;
 
 The type-checking rules prevent many ill-formed terms, but they do not prevent something like $\text{hd} []$, which will give an error during evaluation.
 
-The types of free variables can vary, but each must have a unique type. \vampir\ requires that the type of a variable be inferable from context. For example, $x = 1$ will allow one to infer that $x : \mathbb{F}$. Such variables will always represent (tuples or lists of) public and/or private variables. Variables representing tuples will be split. For example, $x$, if it were known to be a tuple, will be split into $(x.1, x.2)$, where $x.1$ and $x.2$ are new variable names. Splitting will continue until all variables are field elements. A free variable cannot be a function, it must be in a first-order type.
+The types of free variables can vary, but each must have a unique type. \VampIR{}\ requires that the type of a variable be inferable from context. For example, $x = 1$ will allow one to infer that $x : \mathbb{F}$. Such variables will always represent (tuples or lists of) public and/or private variables. Variables representing tuples will be split. For example, $x$, if it were known to be a tuple, will be split into $(x.1, x.2)$, where $x.1$ and $x.2$ are new variable names. Splitting will continue until all variables are field elements. A free variable cannot be a function, it must be in a first-order type.
 
 Evaluation is fairly simple, but it's designed to have side effects making it look less intuitive than it might otherwise. While evaluating, there's a globally available stack of constraints, which I'll denote $\chi$. The correctness of evaluation requires the term to be well-typed. Missing patterns from evaluation should, mostly, be eliminated by type checking.
 
-A top-level \vampir\ program should be of type $()$. Given that restriction, the following defines the set of constraints represented by the program;
+A top-level \VampIR{}\ program should be of type $()$. Given that restriction, the following defines the set of constraints represented by the program;
 
 \begin{align*}
     [[ () ]] = ()\\
@@ -118,19 +113,19 @@ The nature of evaluation makes semantics somewhat nonintuitive. As a program is 
 
 \section{Proposal: Remove the type system}
 
-The current type system in \vampir\ has led to limitations and the need for workarounds. While it is not inherently flawed, there is potential for a more versatile design. A key constraint is the inability to represent certain recursive programs due to the type check process. While solutions have been made to address specific instances, like lists and numbers, these are band-aid solutions that don't address the core issue: the limitations inherent in the type system itself. 
+The current type system in \VampIR{}\ has led to limitations and the need for workarounds. While it is not inherently flawed, there is potential for a more versatile design. A key constraint is the inability to represent certain recursive programs due to the type check process. While solutions have been made to address specific instances, like lists and numbers, these are band-aid solutions that don't address the core issue: the limitations inherent in the type system itself. 
 
-If lists were removed from the language, they could still be implemented using lambda expressions. However, destructors such as the head and tail of the list cannot be iterated since such do not type check. Built-in lists and the accompanying hd, tl, and fold functions were added to compensate for this. A similar issue comes with numbers. Natural numbers could also be lambda encoded, but iterated predecessors don't type check, limiting their usage. iter was added to compensate; it just interprets its natural number argument as a church numeral; something that can already easily be implemented. This same issue would come up with any recursive type. Binary trees can be lambda encoded, and, in fact, one can fold over them as well already in \vampir. You can even take the left and right branches, but you can't iterate taking left and right branches because such wouldn't type check. Some version of this issue emerges with all recursive types. \vampir\ has no solution, currently. The way things have been done in the past suggests extending the language, perhaps with a full-fledged recursive type system. However, I would prefer a different solution: get rid of the type system.
+If lists were removed from the language, they could still be implemented using lambda expressions. However, destructors such as the head and tail of the list cannot be iterated since such do not type check. Built-in lists and the accompanying hd, tl, and fold functions were added to compensate for this. A similar issue comes with numbers. Natural numbers could also be lambda encoded, but iterated predecessors don't type check, limiting their usage. iter was added to compensate; it just interprets its natural number argument as a church numeral; something that can already easily be implemented. This same issue would come up with any recursive type. Binary trees can be lambda encoded, and, in fact, one can fold over them as well already in \VampIR{}. You can even take the left and right branches, but you can't iterate taking left and right branches because such wouldn't type check. Some version of this issue emerges with all recursive types. \VampIR{}\ has no solution, currently. The way things have been done in the past suggests extending the language, perhaps with a full-fledged recursive type system. However, I would prefer a different solution: get rid of the type system.
 
-The type system does not prevent exponentially sized circuits from occurring; just infinitely sized ones. We can easily deal with exponentially sized circuits by stopping evaluation early; I see no reason why this isn't a fine way to deal with infinite circuits on the occasion they occur. \vampir\ is, in particular, an intermediate language. This makes facilities to prevent the developer from shooting themselves in the foot less important than it might be. It's already the user's responsibility to make sure \vampir\ code is sensible; giving them the additional responsibility to make sure the code doesn't loop infinitely is trivial in comparison. The logic errors that the simple type system prevents are, perhaps, not all trivial, but they aren't substantial either. By the nature of a simple type system, the guarantees it gives aren't hard to keep track of by hand.
+The type system does not prevent exponentially sized circuits from occurring; just infinitely sized ones. We can easily deal with exponentially sized circuits by stopping evaluation early; I see no reason why this isn't a fine way to deal with infinite circuits on the occasion they occur. \VampIR{}\ is, in particular, an intermediate language. This makes facilities to prevent the developer from shooting themselves in the foot less important than it might be. It's already the user's responsibility to make sure \VampIR{}\ code is sensible; giving them the additional responsibility to make sure the code doesn't loop infinitely is trivial in comparison. The logic errors that the simple type system prevents are, perhaps, not all trivial, but they aren't substantial either. By the nature of a simple type system, the guarantees it gives aren't hard to keep track of by hand.
 
 Using lambda encodings for all data structures would allow essentially all the faculties of functional programming to be made available; from data structures to complex mutually recursive algorithms. As it stands, the type system filters this into a less useful subset than end users might otherwise want to use.
 
 \section{Proposal: Remove DSL and make fresh simpler}
 
-The design of \vampir\ has an understated issue related to 'fresh'. During evaluation, the body of 'fresh' is discarded, but \vampir\ saves it as a method to determine the value of the newly generated variable. This design doesn't impact circuit semantics but serves as a convenience tool. Instead of users manually inputting values for private variables, 'fresh' provides automatic calculation instructions. To aid this, 'fresh' utilizes a DSL, essentially an extended version of \vampir\ with additional operations, like modulus, which aren't easily represented in arithmetic circuits. This enables 'fresh' to compute values, with subsequent constraints verifying the accuracy of these values.
+The design of \VampIR{}\ has an understated issue related to 'fresh'. During evaluation, the body of 'fresh' is discarded, but \VampIR{}\ saves it as a method to determine the value of the newly generated variable. This design doesn't impact circuit semantics but serves as a convenience tool. Instead of users manually inputting values for private variables, 'fresh' provides automatic calculation instructions. To aid this, 'fresh' utilizes a DSL, essentially an extended version of \VampIR{}\ with additional operations, like modulus, which aren't easily represented in arithmetic circuits. This enables 'fresh' to compute values, with subsequent constraints verifying the accuracy of these values.
 
-So, what's the problem? The fact that fresh uses a manually created DSL means that users cannot use arbitrary programs to calculate values that need to be filled with fresh. This has led to much discussion for how or whether this language should be extended. It's not hard to imagine this discussion going on forever; adding new things whenever they come up. Alternatively, there's a path where we make the DSL computationally universal. But both of these wouldn't even necessarily work, as the correct value for a private variable may need to be supplied by an oracle that cannot be implemented in a \vampir\ program for whatever reason. This can be dealt with by declaring a private variable manually and submitting it at proof generation time. But this begs the question of why fresh needs to exist at all. If it's a reasonable feature of convenience, can it be made better?
+So, what's the problem? The fact that fresh uses a manually created DSL means that users cannot use arbitrary programs to calculate values that need to be filled with fresh. This has led to much discussion for how or whether this language should be extended. It's not hard to imagine this discussion going on forever; adding new things whenever they come up. Alternatively, there's a path where we make the DSL computationally universal. But both of these wouldn't even necessarily work, as the correct value for a private variable may need to be supplied by an oracle that cannot be implemented in a \VampIR{}\ program for whatever reason. This can be dealt with by declaring a private variable manually and submitting it at proof generation time. But this begs the question of why fresh needs to exist at all. If it's a reasonable feature of convenience, can it be made better?
 
 My proposal is this: remove the DSL entirely and have fresh just store a name and signature. Take this example of a typical usage of fresh;
 
@@ -168,11 +163,11 @@ def range5 a = {
 };
 \end{minted}
 
-When this program is compiled, it will also come with a list of named signatures representing functions that need implementation. This program will contain a signature named $\text{range5\_fr}$ that takes one argument and produces a list of five elements. The length may or may not be a part of the signature, but the basic input and output types are. When proving a circuit, implementations for every function in the signature must be provided as well. Exactly what this will look like will depend on the language, but one can easily imagine implementing a function that takes a name and a list of arguments and calculates the output as needed for the circuit in just about any language. The prove function would essentially have an additional argument which is a partial function of type string * [int] -> [int]. Some languages with no support for higher-order functions will need something more complicated, but this shouldn't be a show-stopper in any case. This system would be less convenient for some examples than the current system, but it would allow full flexibility and allow some simplifications in the language. It would require having \vampir\ lean more towards being a library than it currently does, but that's not necessarily a bad thing.
+When this program is compiled, it will also come with a list of named signatures representing functions that need implementation. This program will contain a signature named $\text{range5\_fr}$ that takes one argument and produces a list of five elements. The length may or may not be a part of the signature, but the basic input and output types are. When proving a circuit, implementations for every function in the signature must be provided as well. Exactly what this will look like will depend on the language, but one can easily imagine implementing a function that takes a name and a list of arguments and calculates the output as needed for the circuit in just about any language. The prove function would essentially have an additional argument which is a partial function of type string * [int] -> [int]. Some languages with no support for higher-order functions will need something more complicated, but this shouldn't be a show-stopper in any case. This system would be less convenient for some examples than the current system, but it would allow full flexibility and allow some simplifications in the language. It would require having \VampIR{}\ lean more towards being a library than it currently does, but that's not necessarily a bad thing.
 
 \section{Proposal: Explicit Constraints}
 
-The difficulty in \vampir's semantics stems from its non-compositional nature. To fix this, I propose adding a type of constraint to the language. Lambda expressions shouldn't generate constraints; rather, they should return sets of constraints. I propose the following modified language (note: this is leaving out things we may want to keep, but I'm ignoring them for simplicity).
+The difficulty in \VampIR{}'s semantics stems from its non-compositional nature. To fix this, I propose adding a type of constraint to the language. Lambda expressions shouldn't generate constraints; rather, they should return sets of constraints. I propose the following modified language (note: this is leaving out things we may want to keep, but I'm ignoring them for simplicity).
 
 \begin{align*}
     \text{VampIR} ::=&\ \text{Arith} \\
@@ -227,7 +222,7 @@ By having functions return an explicit set of constraints, we don't need to worr
 def bool x = { x*(x-1) = 0; x };
 \end{minted}
 
-In current \vampir\ this function has type $\mathbb{F} \rightarrow \mathbb{F}$, despite the fact that it has the side effect of generating a constraint. In my proposed change, this would become;
+In current \VampIR{}\ this function has type $\mathbb{F} \rightarrow \mathbb{F}$, despite the fact that it has the side effect of generating a constraint. In my proposed change, this would become;
 
 \begin{minted}[style=borland]{python}
 def bool x = { (x*(x-1) = 0, x) };
@@ -249,29 +244,29 @@ def range5 a = {
 };
 \end{minted}
 
-There are alternatives to this. This typical pattern is an instance of a state monad; it may be better to implement state monad combinators and assume all functions are under a (possibly trivial) constraint set. Function composition would union the produced states together, etc. This would be just as compositional, but it would be, perhaps, less tedious than what I presented here. We can, however, implement such combinators in \vampir\ already, so that may be unnecessary.
+There are alternatives to this. This typical pattern is an instance of a state monad; it may be better to implement state monad combinators and assume all functions are under a (possibly trivial) constraint set. Function composition would union the produced states together, etc. This would be just as compositional, but it would be, perhaps, less tedious than what I presented here. We can, however, implement such combinators in \VampIR{}\ already, so that may be unnecessary.
 
-There are additional potential benefits to what I presented here. For many functions, it's not always obvious when one should do prefix constraint checks. In the case of bit-vector computations, if one doesn't know if the inputs are actually constrained to 0 and 1 then one needs to check this. If we already know this (maybe we already checked this with an earlier operation, and the output of this op is guaranteed to still be a bitvector by construction) then we don't need to add prefix checks. In the current version of \vampir\ this is handled by having multiple versions of the same function, one with checks and the other without. This modification allows one to ignore generated constraints, reducing the need for redundancy.
+There are additional potential benefits to what I presented here. For many functions, it's not always obvious when one should do prefix constraint checks. In the case of bit-vector computations, if one doesn't know if the inputs are actually constrained to 0 and 1 then one needs to check this. If we already know this (maybe we already checked this with an earlier operation, and the output of this op is guaranteed to still be a bitvector by construction) then we don't need to add prefix checks. In the current version of \VampIR{}\ this is handled by having multiple versions of the same function, one with checks and the other without. This modification allows one to ignore generated constraints, reducing the need for redundancy.
 
-\section{Proposal \vampir\ Imports}
+\section{Proposal \VampIR{}\ Imports}
 
-As it stands, \vampir\ does not currently support any kind of import system. This stems, largely, from the fact that simply combining two files will force the top-level constraints of both files to be combined. Despite this, most \vampir\ files consist mainly of reusable functions. \vampir\ should be modified to allow for imports. This would allow much better code reuse, allowing several files to, for example, import range checks rather than forcing each to re-implement them
+As it stands, \VampIR{}\ does not currently support any kind of import system. This stems, largely, from the fact that simply combining two files will force the top-level constraints of both files to be combined. Despite this, most \VampIR{}\ files consist mainly of reusable functions. \VampIR{}\ should be modified to allow for imports. This would allow much better code reuse, allowing several files to, for example, import range checks rather than forcing each to re-implement them
 
 There are several ways this could be done. The simplest would be to simply ignore all top-level constraints for imports. We could also make a second file format that specifically only has definitions and no top-level constraints.
 
-My preferred approach is this: There should be two kinds of \vampir\ files; one that has top-level constraints and another that contains only definitions. These should not be allowed to mix and match. This would prevent spurious constraints and would encourage programmers to abstract functionality into reusable definitions.
+My preferred approach is this: There should be two kinds of \VampIR{}\ files; one that has top-level constraints and another that contains only definitions. These should not be allowed to mix and match. This would prevent spurious constraints and would encourage programmers to abstract functionality into reusable definitions.
 
-\section{\vampir\ Haskell}
+\section{\VampIR{}\ Haskell}
 
-Recently, a port of \vampir\ from Rust into Haskell was started. As part of this, many important implementation differences have been made. This section will briefly summarise them.
+Recently, a port of \VampIR{}\ from Rust into Haskell was started. As part of this, many important implementation differences have been made. This section will briefly summarise them.
 
-In the original implementation of \vampir, parsing was done through a PEG grammar. There was a .pest file which was then used to define a datatype in which parsed modules were stored. The Haskell implementation uses parser combinators as provided by the megaparsec library. This significantly reduces the parsing code from over a thousand lines in Rust to less than 200 in Haskell. This is far more maintainable. In the original implementation of \vampir, there were periodic stack overflows when certain files were parsed; it's not clear at this point if the parser combinators will be more efficient in this respect.
+In the original implementation of \VampIR{}, parsing was done through a PEG grammar. There was a .pest file which was then used to define a datatype in which parsed modules were stored. The Haskell implementation uses parser combinators as provided by the megaparsec library. This significantly reduces the parsing code from over a thousand lines in Rust to less than 200 in Haskell. This is far more maintainable. In the original implementation of \VampIR{}, there were periodic stack overflows when certain files were parsed; it's not clear at this point if the parser combinators will be more efficient in this respect.
 
-The original version of \vampir\ parsed everything into the same format used for computation. The Haskell implementation has a separation between a simpler "core" language and a more complicated type representing \vampir\ ASTs. This allows things like pattern matching to be removed prior to evaluation or type checking. This also allows the core expressions to use higher-order abstract syntax, allowing us to reuse Haskell's binding features instead of implementing them anew.
+The original version of \VampIR{}\ parsed everything into the same format used for computation. The Haskell implementation has a separation between a simpler "core" language and a more complicated type representing \VampIR{}\ ASTs. This allows things like pattern matching to be removed prior to evaluation or type checking. This also allows the core expressions to use higher-order abstract syntax, allowing us to reuse Haskell's binding features instead of implementing them anew.
 
-In the original version of \vampir, all expression constructors were wrapped in a type annotation. These annotations were blank by default, and only filled during type checking. After type checking, these annotations were removed, but the wrappers themselves were always present. This made the language data types more complicated than necessary, and type annotations themselves are simply not necessary since \vampir's type system is simple enough that a most general type can always be efficiently inferred. The type checker in the Haskell implementation infers the most general type, and attempts unification to check for valid types.
+In the original version of \VampIR{}, all expression constructors were wrapped in a type annotation. These annotations were blank by default, and only filled during type checking. After type checking, these annotations were removed, but the wrappers themselves were always present. This made the language data types more complicated than necessary, and type annotations themselves are simply not necessary since \VampIR{}'s type system is simple enough that a most general type can always be efficiently inferred. The type checker in the Haskell implementation infers the most general type, and attempts unification to check for valid types.
 
-In the original, compiled \vampir\ circuits came equipped with a large dictionary of definitions that told the system how to calculate intermediate circuit values. As an example, an expression like;
+In the original, compiled \VampIR{}\ circuits came equipped with a large dictionary of definitions that told the system how to calculate intermediate circuit values. As an example, an expression like;
 
 \begin{minted}[style=borland]{python}
 x + (y * z) = 2
@@ -282,9 +277,6 @@ x + v = 2
 v = y * z
 \end{minted}
 Additionally, separate from the actual circuit sent to Halo2 or Plonk, there would be a definition telling the system that v's value can be calculated by multiplying y and z. This is both obviously redundant and significantly complicates things like optimization as one needs to keep track of, not just the circuit, but also ancillary definitions. The Haskell implementation uses constraint propagation to infer what values unassigned variables must take based on the 3ac constraints they are a part of. Any values which could have been inferred by simply evaluating the circuits can also be inferred like this, with no change in asymptotic efficiency. This would also significantly simplify any future optimization work, although the Haskell implementation does not do any optimization, currently.
-
-
-\section*{Acknowledgements}
 
 
 \nocite{*}
