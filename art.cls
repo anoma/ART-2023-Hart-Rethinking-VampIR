@@ -128,13 +128,13 @@
 \declaretheoremstyle[
 	headfont=\normalfont\bfseries,
 	bodyfont=\normalfont\itshape,
-	headpunct={},
+	headpunct={.},
 ]{p-thm}
 
 \declaretheoremstyle[
 	headfont=\normalfont\bfseries,
 	bodyfont=\normalfont,
-	headpunct={},
+	headpunct={.},
 	spacebelow=\topsep,
 	spaceabove=\topsep,
 ]{p-example}
@@ -156,6 +156,7 @@
 \g@addto@macro\bfseries{\boldmath}
 % Natural deduction proofs
 \RequirePackage{bussproofs}
+\RequirePackage{proof}
 
 % For listings
 \RequirePackage{minted}
@@ -252,10 +253,21 @@
   makecell,                                   % multilined table cells
   tabularx,                                   % width-expanding column (with 'x')
   multirow,                                   % for multirow cells (with \\)
-  colortbl                                    % to add colours to table cells,
+  colortbl,                                   % to add colours to table cells,
+  xypic,                                      % for commutative diagrams
+  footnote                                    % support for footnotes inside tabular
   % colortblarray,
   % array,                                      % for better column definitions 
 }
+
+% Support footnotes inside tabular. No use table
+% instead, use \captionof{table}{..}
+\makesavenoteenv{tabular}
+\makesavenoteenv{tabularx}
+\makesavenoteenv{table}
+
+\RequirePackage{setspace} % to set different spacing in paragraphs
+
 % booktabs provide nice spacing, but rule widths and distances need modifying
 \setlength{\heavyrulewidth}{0.5pt}            % wide rule
 \setlength{\lightrulewidth}{0.5pt}            % light rule
@@ -342,7 +354,10 @@
     % numbers,                % numbers as references
     merge,                  % merge multiple references in one
     % super,                  % superscript
-    sort&compress
+    sort&compress,
+    round,                  % parentheses around year
+    semicolon,              % separate references with semicolon
+    nonamebreak,           % keep authors on the same line
 ]{natbib}
 
 % Moves references after punctuation
@@ -352,16 +367,7 @@
 % Bibliography style
 %% No separation between references
 \setlength{\bibsep}{0.0pt}
-%% Use ART-bib.bst as a style (if available) else fall back to unsrtnat
-\IfFileExists{templates/ART/ART-bib.bst}{
-  \bibliographystyle{templates/ART/ART-bib}
-}{
-  \IfFileExists{ART-bib.bst}{
-  \bibliographystyle{ART-bib}
-  }{
-    \PackageWarning{ART-bib}{templates/ART/ART-bib.bst not found; must specify manually}
-    \bibliographystyle{unsrt}
-}}
+\bibliographystyle{unsrtnat}
 %% set Bibliography font
 \renewcommand\bibfont{\normalfont\sffamily\fontsize{6}{8}\selectfont}
 %% Use "References" as bibliography title
@@ -374,13 +380,21 @@
 \renewcommand\@biblabel[1]{ #1.}
 
 % Footnotes
-\RequirePackage[flushmargin,ragged,symbol*]{footmisc}
+\RequirePackage[%
+    flushmargin        % This option makes footnotes align with the margin.
+  , ragged             % This option sets the footnote text to be left-aligned.
+  % , symbol*          % This option changes the symbols used for
+                       % footnotes. Instead of numbers, symbols like *, †, ‡, etc., will be used
+]{footmisc}
 \renewcommand*{\footnotelayout}{\footnotefont}
 \renewcommand{\footnoterule}{% Set the footnote hrule style
   \kern -3pt
   {\color{black50} \hrule width 72pt height 0.25pt}
   \kern 2.5pt
 }
+
+
+\RequirePackage{hyphenat} % break long verbatim text
 
 % References and bookmarks
 
@@ -392,11 +406,24 @@
 \RequirePackage[
   colorlinks=true,
   allcolors=anoma,
-  pagebackref=false
+  pagebackref=true,
 ]{hyperref}
 
 \PassOptionsToPackage{unicode}{hyperref}
 \PassOptionsToPackage{naturalnames}{hyperref}
+\RequirePackage{hypernat}
+\RequirePackage{backref}
+
+% Backref settings
+\renewcommand*{\backref}[1]{}
+\renewcommand*{\backrefalt}[4]{{%
+    \ifcase #1 %
+          \or (cit. on p.~#2.)%
+          \else (cit. on pp. #2.)%
+    \fi%
+    }}
+% https://tex.stackexchange.com/questions/183702/formatting-back-references-in-bibliography-bibtex
+
 %% Set URL link color & font
 \renewcommand\UrlFont{\color{anoma}\sffamily}
 
@@ -510,7 +537,7 @@ x}
       }}}%
       \vcenter{%  
         {\Large
-        \textit{\textbf{Anoma Research Topics}}} | \textsf{Technical Report}
+        \textit{\textbf{Anoma Research Topics}}} | \textsf{\arttype{}}
       }$ 
       % \hrule 
       }                            % article type  
