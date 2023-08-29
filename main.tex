@@ -257,45 +257,66 @@ For languages lacking higher-order function support, a more complex approach may
 
 The difficulty in \VampIR{}'s semantics stems from its non-compositional nature as discussed in~\Cref{remark:semanatics-no-compositional}. To fix this, we propose adding a type of constraint to the language. Lambda expressions should not generate constraints; rather, they should return sets of constraints.
 
+
 For simplicity, we propose a modified language, albeit omitting certain elements that may be desirable to retain.
 
-\begin{align*}
-    \text{VampIR} ::=&\ \text{Arith} \\
-    |\ &\ \text{VampIR} \ = \ \text{VampIR} \\
-    |\ &\ \text{VampIR} \wedge \text{VampIR} \\
-    |\ &\ \text{Type} \ \times \ \text{Type} \\
-    |\ &\ \lambda v . \text{VampIR} \\
-    |\ &\ \text{VampIR}\ \text{VampIR} \\
-    |\ &\ \text{VampIR} \ \text{op} \ \text{VampIR} \
-    |\ - \text{VampIR}\ |\ f\ |\ v \\
-    \text{op} =&\ + \,|\, \times \,|\, - \,|\, / \\
-    f \in&\ \mathbb{F} \\
-    \text{v} \in&\ \text{string}
-\end{align*}
+\begin{figure}[!htb]
+\begin{equation*}
+\begin{array}{rclr}
+    \text{VampIR} &::=  &\text{Arith} &\\
+    &|   &\text{VampIR} \ = \ \text{VampIR} &\\
+    &|   &\text{VampIR} \wedge \text{VampIR} &\\
+    &|   &\text{Type} \ \times \ \text{Type} &\\
+    &|   &\lambda v . \text{VampIR} &\\
+    &|   &\text{VampIR}\ \text{VampIR} &\\
+    &|   &\text{VampIR} \ \textsf{op} \ \text{VampIR} &\\
+    &|  &- \text{VampIR} &\\
+    &|  &f  & \\
+    &|  &v &\\[2mm]
+    \textsf{op} &::=  &+ \,|\, \times \,|\, - \,|\, / &\\
+    f &\in  &\mathbb{F} &\\
+    \text{v} &\in  &\text{string} &
+\end{array}
+\end{equation*}
+\caption{\VampIR{} syntax grammar.}
+\label{fig:grammar}
+\end{figure}
 
-with the type system
+\begin{figure}[!htb]
+\begin{equation*}
+\begin{array}{rclr}
+    \text{Type} &::= &v &\\
+    &| &\text{Type} \ \xrightarrow{} \ \text{Type}  & \\
+    &| &\text{Type} \ \times \ \text{Type}  & \\
+    &| &\mathbb{B}  & \\
+    &| &\mathbb{F}  & \\
+\end{array}
+\end{equation*}
+\caption{Modified \VampIR{} syntax grammar.}
+\label{fig:grammar}
+\end{figure}
 
-\begin{align*}
-    \text{Type} ::=&\ v \\
-    |\ &\ \text{Type} \ \xrightarrow{} \ \text{Type} \\
-    |\ &\ \text{Type} \ \times \ \text{Type} \\
-    |\ &\ \mathbb{B} \\
-    |\ &\ \mathbb{F} \\
-\end{align*}
-
-and type-checking rules
-
-\begin{align*}
-    \frac{f \in \mathbb{F}}{f : \mathbb{F}} \quad
-    \frac{op \in \{+, *, -, /, \div, \% \} \quad x : \mathbb{F} \quad y : \mathbb{F} }{(x\ op\ y) : \mathbb{F}} \quad
+\begin{figure}[!htb]
+\centering
+\begin{spacing}{1.5}
+\scalebox{1.6}{
+\begin{tabular}{c}
+    $\frac{f \in \mathbb{F}}{f : \mathbb{F}} \quad
+    \frac{\mathsf{op} \in \{+, *, -, /, \div, \% \} \quad x : \mathbb{F} \quad y : \mathbb{F} }{(x\ \mathsf{op} \ y) : \mathbb{F}} \quad
     \frac{T \in 1st \quad x : T \quad y : T}{(x = y) : \mathbb{B}} \quad
-    \frac{x : \mathbb{B} \quad y : \mathbb{B} }{x \wedge y : \mathbb{B}}\\
-    \frac{x : T \quad y : U}{(x,y) : T \times U} \quad
+    \frac{x : \mathbb{B} \quad y : \mathbb{B} }{x \wedge y : \mathbb{B}}$\\
+
+    $\frac{x : T \quad y : U}{(x,y) : T \times U} \quad
     \frac{}{\text{fst} : T \times U \rightarrow T} \quad
     \frac{}{\text{snd} : T \times U \rightarrow U}\quad
     \frac{x : T \vdash y : U}{\lambda x.y : T \rightarrow U} \quad\
-    \frac{x : T \rightarrow U \quad y : T}{(x\ y) : U} 
-\end{align*}
+    \frac{x : T \rightarrow U \quad y : T}{(x\ y) : U}$
+\end{tabular}
+}
+\end{spacing}
+\caption{Modified \VampIR{} typing rules.}
+\label{fig:grammar}
+\end{figure}
 
 With these in place, we can give a sensible interpretation to any program of type $\mathbb{B}$; it will be, essentially, a set of constraints.
 
