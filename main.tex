@@ -151,12 +151,12 @@ The correctness of evaluation requires the term to be well-typed, assuming that,
 \begin{equation*}
 \begin{array}{lclr}
     \evalT{ ()} &:\equiv &() &\\
-    \evalT{ \text{iter}\ (n+1)\ f\ x} &:\equiv &\evalT{f\ (\text{iter}\ n\ f\ x)} &\\
     \evalT{ (x; y)} &:\equiv &\evalT{x}; \evalT{y} &\\
     \evalT{ (x, y)} &:\equiv &(\evalT{x}, \evalT{y}) &\\
     \evalT{ \text{fst}\ (x,\ y)} &:\equiv &\evalT{x} &\\
     \evalT{ \text{snd}\ (x,\ y)} &:\equiv &\evalT{y} &\\
     \evalT{ \text{iter}\ 0\ f\ x} &:\equiv &\evalT{x} &\\
+     \evalT{ \text{iter}\ (n+1)\ f\ x} &:\equiv &\evalT{f\ (\text{iter}\ n\ f\ x)} &\\
     \evalT{ (x :: l)} &:\equiv &(\evalT{x} :: \evalT{l})&\\
     \evalT{ \text{hd}\ (x::l)} &:\equiv &\evalT{x} &\\
     \evalT{ \text{tl}\ (x::l)} &:\equiv &\evalT{l} &\\
