@@ -306,8 +306,8 @@ For simplicity, we propose a modified language, albeit omitting certain elements
 \end{tabular}
 }
 \end{spacing}
-\caption{Modified \VampIR{} typing rules for Explicit constraints' proposal. $U$ and $T$ are types as in~\Cref{fig:modified-grammar}.}
-\label{fig:grammar}
+\caption{Modified \VampIR{} typing rules for Explicit constraints' proposal. $U$ and $T$ are terms of type \textsf{Type} as defined in~\Cref{fig:modified-grammar}.}
+\label{fig:modified-typing-rules}
 \end{figure}
 
 With these in place, we can give a sensible interpretation to any program of type $\mathbb{B}$; it will be, essentially, a set of constraints.
@@ -329,7 +329,7 @@ By having functions return an explicit set of constraints, we do not need to wor
 def bool x = { x*(x-1) = 0; x };
 \end{minted}
 
-In current \VampIR{} this function has type $\mathbb{F} \rightarrow \mathbb{F}$, despite the fact that it has the side effect of generating a constraint. In my proposed change, this would become;
+In the original \VampIR{} this function has type $\mathbb{F} \rightarrow \mathbb{F}$, despite the fact that it has the side effect of generating a constraint. In the proposed change, this would become;
 
 \begin{minted}[style=borland]{python}
 def bool x = { (x*(x-1) = 0, x) };
@@ -362,13 +362,13 @@ As it stands, \VampIR{} does not currently support any kind of import system. Th
 
 There are several ways this could be done. The simplest would be to simply ignore all top-level constraints for imports. We could also make a second file format that specifically only has definitions and no top-level constraints.
 
-My preferred approach is this: There should be two kinds of \VampIR{} files; one that has top-level constraints and another that contains only definitions. These should not be allowed to mix and match. This would prevent spurious constraints and would encourage programmers to abstract functionality into reusable definitions.
+Our preferred approach is this: There should be two kinds of \VampIR{} files; one that has top-level constraints and another that contains only definitions. These should not be allowed to mix and match. This would prevent spurious constraints and would encourage programmers to abstract functionality into reusable definitions.
 
 \section{\VampIR{} Haskell}\label{sec:vamp-ir-haskell}
 
-We port \VampIR{} from Rust into Haskell in~\citep{vamp-ir-haskell}. There are significant differences in this \VampIR{} implementation, which we briefly summarize in this section.
+We port \VampIR{} from Rust to Haskell in~\citep{vamp-ir-haskell}. However, there are significant differences in this \VampIR{} implementation, which we briefly summarize in this section.
 
-In the original implementation of \VampIR{}, parsing was done through a PEG grammar. There was a \texttt{.pest} file which was then used to define a datatype in which parsed modules were stored. The Haskell implementation uses parser combinators as provided by the Megaparsec library. This significantly reduces the parsing code from over a thousand lines in Rust to less than 200 in Haskell. This is far more maintainable. In the original implementation of \VampIR{}, there were periodic stack overflows when certain files were parsed; it is not clear at this point if the parser combinators will be more efficient in this respect.
+In the original implementation of \VampIR{}, parsing was done using a PEG grammar. There was a \texttt{.pest} file which was then used to define a datatype in which parsed modules were stored. The Haskell implementation uses parser combinators as provided by the Megaparsec library. This significantly reduces the parsing code from over a thousand lines in Rust to less than 200 in Haskell. This is far more maintainable. In the original implementation of \VampIR{}, there were periodic stack overflows when certain files were parsed; it is not clear at this point if the parser combinators will be more efficient in this respect.
 
 The original \VampIR{} compiler parses everything into the same format used for computation. The Haskell implementation has a separation between a simpler \say{core} language and a more complicated type representing \VampIR{} ASTs. This allows things like pattern matching to be removed prior to evaluation or type checking. This also allows the core expressions to use higher-order abstract syntax, allowing us to reuse Haskell's binding features instead of implementing them anew.
 
@@ -392,8 +392,8 @@ value of \texttt{v} can be calculated by multiplying \texttt{y} and \texttt{z}. 
 
 \section{Acknowledgements}
 
-The \VampIR{} language and compiler were initially developed by Joshua Fitzgerald and Wei Dai, members of the original \VampIR{} team at Heliax. The subsequent compiler development and language modifications to reach its current state, as described in this report, were carried out by Joshua Fitzgerald, Murisi Tarusenga, Carlo Modica, the author of this report, and other GitHub contributors. Special thanks to the
-\Juvix{} team for reporting bugs, providing feedback, and overall improving the GitHub repository, particularly Paul Cadman on the latest feature additions.
+The \VampIR{} language and compiler were initially developed by Joshua Fitzgerald and Wei Dai, members of the original \VampIR{} team at Heliax. Subsequent compiler development and language modifications to reach its current state, as described in this report, were carried out by Joshua Fitzgerald, Murisi Tarusenga, Carlo Modica, the author of this report, and other GitHub contributors. Special thanks to the
+\Juvix{} team for reporting bugs, providing feedback, and overall improving of the \VampIR{} repository, particularly Paul Cadman on the latest feature additions.
 
 The authors extend thanks to Jonathan Prieto-Cubides for reviewing and improving parts of this report and also to Lukasz Czajka for his feedback.
 
