@@ -133,7 +133,7 @@ Variables $T$ and $U$ are types as in~\Cref{fig:types}.
 \end{figure}
 
 
-The types of free variables can vary, but each must have a unique type. \VampIR{} requires that the type of a variable be inferable from context. For example, $(x = 1)$ allow us to infer that $x : \mathbb{F}$. Such variables always represent (tuples or lists of) public and/or private variables. The variables that represent tuples are further broken down. For example, if $x$ is known to be a tuple, it can be divided into $(x.1, x.2)$, with $x.1$ and $x.2$ being new variable names. This process of splitting will continue until all variables are field elements. Note that a free variable cannot be a function; it has to be a first-order type, see~\Cref{eq:first-order-type}.
+The types of free variables can vary, but each must have a unique type. \VampIR{} requires that the type of a variable be inferable from context. For example, $(x = 1)$ allows us to infer that $x : \mathbb{F}$. Such variables always represent (tuples or lists of) public and/or private variables. The variables that represent tuples are further broken down. For example, if $x$ is known to be a tuple, it can be divided into $(x.1, x.2)$, with $x.1$ and $x.2$ being new variable names. This process of splitting will continue until all variables are field elements. Note that a free variable cannot be a function; it has to be a first-order type, see~\Cref{eq:first-order-type}.
 
 \begin{remark}
 We use the typing rules described in~\Cref{fig:typing-rules-1} to prevent many ill-formed terms. However, these rules do not prevent us from introducing expressions such as \texttt{hd  []}. This will cause an error during evaluation.
@@ -143,7 +143,7 @@ We use the typing rules described in~\Cref{fig:typing-rules-1} to prevent many i
 
 The evaluation semantics is described in~\Cref{fig:enter-label} and is designed to have side effects that make it less intuitive than it would otherwise. During the evaluation, there is a global stack of constraints, denoted by $\chi$ below. 
 
-The correctness of evaluation requires the term to be well-typed, assuming that, for example, top-level \VampIR{} program has type $()$. Missing patterns from the evaluation are, in a large way, eliminated by type checking. 
+The correctness of evaluation requires the term to be well-typed, assuming that, for example, top-level \VampIR{} program has type $()$. Missing patterns from the evaluation are, broadly, eliminated by type checking. 
 
 \begin{figure}[!htb]
     \centering
@@ -202,7 +202,7 @@ Using lambda encodings for all data structures would allow essentially all the f
 
 The design of \VampIR{} has an understated issue related to \texttt{fresh}. During evaluation, the body of \texttt{fresh} is discarded, but \VampIR{} saves it as a method to determine the value of the newly generated variable. This design does not impact circuit semantics but serves as a convenience tool. Instead of users manually entering values for private variables, \texttt{fresh} provides automatic calculation instructions. To aid this, \texttt{fresh} utilizes a DSL, essentially an extended version of \VampIR{} with additional operations, like modulus, which are not easily represented in arithmetic circuits. This enables \texttt{fresh} to compute values, with subsequent constraints verifying the accuracy of these values.
 
-So, what is the problem? The fact that \texttt{fresh} uses a manually created DSL means that users cannot use arbitrary programs to calculate the values that need to be filled with \texttt{fresh}. This has led to much discussion as to how or whether this language should be extended. Two paths emerge: perpetual addition of new elements as they arise, or making the DSL computationally universal. However, both may not be viable solutions, as the correct value for a private variable may need to be supplied by an oracle that cannot be implemented in a \VampIR{} program.  A workaround is manual declaration and submission of a private variable at proof generation time. Yet, this raises the question of why a \texttt{fresh} need to exist at all. If it is a reasonable feature of convenience, can it be made better?
+So, what is the problem? The fact that \texttt{fresh} uses a manually created DSL means that users cannot use arbitrary programs to calculate the values that need to be filled with \texttt{fresh}. This has led to much discussion as to how or whether this language should be extended. Two paths emerge: perpetual addition of new elements as they arise, or making the DSL computationally universal. However, both may not be viable solutions, as the correct value for a private variable may need to be supplied by an oracle that cannot be implemented in a \VampIR{} program.  A workaround is manual declaration and submission of a private variable at proof generation time. Yet, this raises the question of why \texttt{fresh} needs to exist at all. If it is a reasonable feature of convenience, can it be made better?
 
 Considering this, we suggest the complete elimination of the DSL, allowing only
 \texttt{fresh} to store a name and signature. 
@@ -244,17 +244,17 @@ def range5 a = {
 };
 \end{minted}
 
-Upon compilation, we expect the program above generates a list of named signatures, each representing a function requiring implementation. This program will contain a signature named \texttt{range5\_fr} that takes one argument and produces a list of five elements. The length may or may not be part of the signature, but the basic input and output types are. 
+Upon compilation, we expect the program above to generate a list of named signatures, each representing a function requiring implementation. This program will contain a signature named \texttt{range5\_fr} that takes one argument and produces a list of five elements. The length may or may not be part of the signature, but the basic input and output types are. 
 \end{example}
 
 Now, when proving a circuit, implementations for every function in the signature must also be provided. The exact form will depend on the language, but one can easily imagine implementing a function that takes a name and a list of arguments to compute the required output for the circuit in any language. The prove function would then essentially have an additional argument: a partial function of type \texttt{string * [int] -> [int]}.
 
-For languages lacking higher-order function support, a more complex approach may be needed, but this should not be a show-stopper in any case. While this system may present less convenience for certain examples compared to the current one, it compensates by offering full flexibility and potential simplifications to the language. Requiring \VampIR{} to lean more towards a library than it currently does, as seen in practice within the Taiga\footnote{\url{https://github.com/anoma/taiga}.} framework for shielded transactions.
+For languages lacking higher-order function support, a more complex approach may be needed, but this should not be a show-stopper in any case. While this system may present less convenience for certain examples compared to the current one, it compensates by offering full flexibility and potential simplifications to the language. This requires \VampIR{} to lean more towards a library than it currently does, as seen in practice within the Taiga\footnote{\url{https://github.com/anoma/taiga}.} framework for shielded transactions.
 
 \section{Proposal: Explicit constraints}
 \label{sec:explicit-constraints}
 
-The difficulty in \VampIR{}'s semantics stems from its non-compositional nature as discussed in~\Cref{remark:semanatics-no-compositional}. To fix this, we propose adding a type of constraint to the language. Lambda expressions should not generate constraints; rather, they should return sets of constraints.
+The difficulty in \VampIR{}'s semantics stems from its non-compositional nature as discussed in~\Cref{remark:semanatics-no-compositional}. To fix this, we propose adding a type of constraint to the language. \VampIR{} expressions should not generate constraints; rather, they should return sets of constraints.
 
 
 For simplicity, we propose a modified language, albeit omitting certain elements that may be desirable to retain.
@@ -372,7 +372,7 @@ The original \VampIR{} compiler parses everything into the same format used for 
 
 In the original \VampIR{}, all expression constructors are wrapped in a type annotation, which were blank by default and filled only during type checking. Post type-checking, these annotations were discarded, yet the wrappers persisted. This unnecessarily complicated the language data types, as the type annotations themselves were not required. Recall that,
 as discussed in~\Cref{sec:removal-type-system}, 
-\VampIR{}'s type system is simple enough that a most general type can always be efficiently inferred. The type checker in the Haskell implementation infers the most general type, and attempts unification to check for valid types.
+\VampIR{}'s type system is simple enough that a most general type can always be efficiently inferred. The type checker in the Haskell implementation infers the most general type, and attempts unification for type checking.
 
 Originally, compiled \VampIR{} came equipped with a large dictionary of definitions that told the system how to calculate intermediate circuit values. As an example, an expression like;
 
@@ -386,7 +386,7 @@ v = y * z
 \end{minted}
 
 Additionally, separate from the actual circuit sent to Halo2 or Plonk, there would be a definition instructing the system that the
-value of \texttt{v} can be calculated by multiplying \texttt{y} and \texttt{z}. This redundancy significantly complicates the process, such as optimization, as one needs to keep track of not just the circuit, but also ancillary definitions. On the contrary, the Haskell implementation uses \emph{constraint propagation} to infer the required values for unassigned variables based on their involvement in the \textsf{3ac} constraints. Any values which could be inferred through simple circuit evaluation can similarly be inferred this way, with no change in asymptotic efficiency. This approach would also significantly simplify any future optimization work, although the current Haskell implementation does not perform any optimization.
+value of \texttt{v} can be calculated by multiplying \texttt{y} and \texttt{z}. This redundancy significantly complicates circuit processing, such as optimization, as one needs to keep track of not just the circuit, but also ancillary definitions. In contrast, the Haskell implementation uses \emph{constraint propagation} to infer the required values for unassigned variables based on their involvement in the \textsf{3ac} constraints. Any values which could be inferred through simple circuit evaluation can similarly be inferred this way, with no change in asymptotic efficiency. This approach would also significantly simplify any future optimization work, although the current Haskell implementation does not perform any optimization.
 
 \section{Acknowledgements}
 
