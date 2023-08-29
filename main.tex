@@ -372,7 +372,7 @@ In the original implementation of \VampIR{}, parsing was done through a PEG gram
 
 The original \VampIR{} compiler parses everything into the same format used for computation. The Haskell implementation has a separation between a simpler \say{core} language and a more complicated type representing \VampIR{} ASTs. This allows things like pattern matching to be removed prior to evaluation or type checking. This also allows the core expressions to use higher-order abstract syntax, allowing us to reuse Haskell's binding features instead of implementing them anew.
 
-In the original \VampIR{}, all expression constructors are wrapped in a type annotation, which were blank by default and filled only during type checking. Post type-checking, these annotations were discarded, yet the wrappers persisted. This unnecessarily complicated the language data types, as the type annotations themselves were not required. Remember that,
+In the original \VampIR{}, all expression constructors are wrapped in a type annotation, which were blank by default and filled only during type checking. Post type-checking, these annotations were discarded, yet the wrappers persisted. This unnecessarily complicated the language data types, as the type annotations themselves were not required. Recall that,
 as discussed in~\Cref{sec:removal-type-system}, 
 \VampIR{}'s type system is simple enough that a most general type can always be efficiently inferred. The type checker in the Haskell implementation infers the most general type, and attempts unification to check for valid types.
 
@@ -388,14 +388,14 @@ v = y * z
 \end{minted}
 
 Additionally, separate from the actual circuit sent to Halo2 or Plonk, there would be a definition instructing the system that the
-value of \texttt{v} can be calculated by multiplying \texttt{y} and \texttt{z}. This redundancy significantly complicates the process, such as optimization, as one needs to keep track of not just the circuit, but also ancillary definitions. In contrast, the Haskell implementation uses \emph{constraint propagation} to infer the required values for unassigned variables based on their involvement in the \textsf{3ac} constraints. Any values which could be inferred through simple circuit evaluation can similarly be inferred this way, with no change in asymptotic efficiency. This approach would also significantly simplify any future optimization work, although the current Haskell implementation does not perform any optimization.
+value of \texttt{v} can be calculated by multiplying \texttt{y} and \texttt{z}. This redundancy significantly complicates the process, such as optimization, as one needs to keep track of not just the circuit, but also ancillary definitions. On the contrary, the Haskell implementation uses \emph{constraint propagation} to infer the required values for unassigned variables based on their involvement in the \textsf{3ac} constraints. Any values which could be inferred through simple circuit evaluation can similarly be inferred this way, with no change in asymptotic efficiency. This approach would also significantly simplify any future optimization work, although the current Haskell implementation does not perform any optimization.
 
 \section{Acknowledgements}
 
 The \VampIR{} language and compiler were initially developed by Joshua Fitzgerald and Wei Dai, members of the original \VampIR{} team at Heliax. The subsequent compiler development and language modifications to reach its current state, as described in this report, were carried out by Joshua Fitzgerald, Murisi Tarusenga, Carlo Modica, the author of this report, and other GitHub contributors. Special thanks to the
-\Juvix{} team for reporting bugs, providing feedback, and improving overall the GitHub repository, particularly Paul Cadman on the latest feature additions.
+\Juvix{} team for reporting bugs, providing feedback, and overall improving the GitHub repository, particularly Paul Cadman on the latest feature additions.
 
-Thanks are extended to Jonathan Prieto-Cubides for reviewing and improving the parts of this report, and also to Lukasz Czajka for his feedback.
+The authors extend thanks to Jonathan Prieto-Cubides for reviewing and improving parts of this report and also to Lukasz Czajka for his feedback.
 
 \bibliography{ref.bib}
 
