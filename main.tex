@@ -20,7 +20,7 @@ The necessity for an intermediate language is evident. Without one, each desired
 
 \VampIR{} aims to offer a minimal yet expressive interface for describing the core data structure utilized by most modern zero-knowledge proof systems. It is designed to be flexible and straightforward but does not incorporate any cryptographic features. \VampIR{} files are sufficiently generic to be applicable for uses involving arithmetic circuits, even those unrelated to cryptography.
 
-Here we focus on reevaluating the existing design of the \VampIR{} front-end language and compiler. We present its syntax, type system, and semantics in~\Cref{sec:current-vampIR} with the aim of proposing a more flexible design in~\Cref{sec:removal-type-system,sec:removal-dsl} for a new compiler with support for explicit constraints in modular \VampIR{} programs as described in~\Cref{sec:explicit-constraints,sec:vamp-ir-haskell,sec:imports}. 
+Here, we focus on reevaluating the existing design of the \VampIR{} front-end language and compiler. We present its syntax, type system, and semantics in~\Cref{sec:current-vampIR} with the aim of proposing a more flexible design in~\Cref{sec:removal-type-system,sec:removal-dsl} for a new compiler with support for explicit constraints in modular \VampIR{} programs as described in~\Cref{sec:explicit-constraints,sec:vamp-ir-haskell,sec:imports}. 
 
 \section{Current \VampIR{}}\label{sec:current-vampIR}
 
@@ -393,7 +393,7 @@ value of \texttt{v} can be calculated by multiplying \texttt{y} and \texttt{z}. 
 \section{Acknowledgements}
 
 The \VampIR{} language and compiler were initially developed by Joshua Fitzgerald and Wei Dai, members of the original \VampIR{} team at Heliax. Subsequent compiler development and language modifications to reach its current state, as described in this report, were carried out by Joshua Fitzgerald, Murisi Tarusenga, Carlo Modica, the author of this report, and other GitHub contributors. Special thanks to the
-\Juvix{} team for reporting bugs, providing feedback, and overall improving of the \VampIR{} repository, particularly Paul Cadman on the latest feature additions.
+\Juvix{} team for reporting bugs, providing feedback, and overall improving of the \VampIR{} repository, particularly Paul Cadman on adding compile, proof and verify APIs for the Halo2 backend so that \VampIR{} coul be used from Taiga as a library.
 
 The authors extend thanks to Jonathan Prieto-Cubides for reviewing and improving parts of this report and also to Lukasz Czajka for his feedback.
 
