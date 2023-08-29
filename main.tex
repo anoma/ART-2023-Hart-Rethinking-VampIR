@@ -36,7 +36,7 @@ its syntax could be described as in~\Cref{fig:grammar}.
     \text{VampIR} &::= &\text{Arith} &\text{XXX}\\
     &| &(\text{VampIR} \ = \ \text{VampIR}) &\\
     &| &(\text{VampIR};\ \text{VampIR}) &\\
-    &| &() &XXX\\
+    &| &() &\text{XXX}\\
     &| &(\text{VampIR},\ \text{VampIR}) &\\
     &| &\text{fst}\ |\ \text{snd} &\\
     &| &\text{VampIR}:: \text{VampIR}\ |\ [] &\\
@@ -186,16 +186,16 @@ The evaluation process generates a global stack of constraints, denoted as $\chi
 \section{Proposal: Remove the type system}
 \label{sec:removal-type-system}
 
-The current type system in \VampIR{} has led to limitations and the need for workarounds. While it is not inherently flawed, there is potential for a more versatile design. A key constraint is the inability to represent certain recursive programs due to the type check process. While solutions have been made to address specific instances, like lists and numbers, these are band-aid solutions that do not address the core issue: the limitations inherent in the type system itself. 
+The current type system in \VampIR{} has led to limitations and the need for workarounds. While it is not inherently flawed, there is potential for a more versatile design. A key constraint is the inability to represent certain recursive programs due to typechecking. While solutions have been made to address specific instances, like lists and numbers, these are band-aid solutions that do not address the core issue: the limitations inherent in the type system itself. 
 
-While lists could be implemented using lambda expressions if removed from the language, their destructors such as the head and tail cannot be iterated due to type check issues. This necessitated the addition of built-in lists and accompanying \texttt{hd}, \texttt{tl}, and \texttt{fold} functions. A similar limitation arises with natural numbers; these numbers could also be lambda encoded, but iterated predecessors do not type check, limiting their usage. \texttt{iter} was added to compensate; it just interprets its natural number argument as a church numeral; something that can already easily be implemented. 
+While lists could be implemented using lambda expressions if removed from the language, their destructors, such as the head and tail, cannot be iterated due to typechecking issues. This requires the addition of built-in lists and accompanying \texttt{hd}, \texttt{tl}, and \texttt{fold} functions. A similar limitation arises with natural numbers; these numbers could also be lambda encoded, but iterated predecessors do not type check, limiting their usage. \texttt{iter} was added to compensate; it just interprets its natural number argument as a church numeral; something that can already easily be implemented. 
 
 The same issue arises with any recursive type. For example, binary trees can be lambda encoded, and, in fact, one can fold over them as well already in \VampIR{}. One can even take the left and right branches, but iteration over these branches does not type check. Some version of this issue emerges with all recursive types. \VampIR{} has no solution currently. The way things have been done in the past suggests extending the language, perhaps with a full-fledged recursive type system. However, we would prefer a different solution: remove the type system.
 
 The type system does not prevent exponentially sized circuits from occurring; just infinitely sized ones. The way to dealing with exponentially sized circuits is straightforward --halt evaluation prematurely. This method should suffice for managing infinite circuits when they arise.
 
 
-\VampIR{} primarily serves as an intermediate language. This makes facilities to prevent the developer from shooting themselves in the foot less important than it might be. It is already the user's responsibility to make sure \VampIR{} code is sensible; giving them the additional responsibility to make sure that the code does not loop infinitely is trivial in comparison. The logic errors that the simple type system prevents are, perhaps, not all trivial, but they are not substantial either. Given the simplicity of the type system, the guarantees it gives should be easy to keep track of by hand.
+\VampIR{} primarily serves as an intermediate language. This makes facilities that prevent the developer from shooting themselves in the foot less important than it might be. It is already the user's responsibility to make sure \VampIR{} code is sensible; giving them the additional responsibility to make sure that the code does not loop infinitely is trivial in comparison. The logic errors that the simple type system prevents are, perhaps, not all trivial, but they are not substantial either. Given the simplicity of the type system, the guarantees it gives should be easy to keep track of by hand.
 
 Using lambda encodings for all data structures would allow essentially all the faculties of functional programming to be made available; from data structures to complex mutually recursive algorithms. As it stands, the type system filters this into a less useful subset than end users might otherwise want to use.
 
@@ -248,9 +248,9 @@ def range5 a = {
 Upon compilation, we expect the program above generates a list of named signatures, each representing a function requiring implementation. This program will contain a signature named \texttt{range5\_fr} that takes one argument and produces a list of five elements. The length may or may not be part of the signature, but the basic input and output types are. 
 \end{example}
 
-Now when proving a circuit, implementations for every function in the signature must also be provided. The exact form will depend on the language, but one can easily imagine implementing a function that takes a name and a list of arguments to compute the required output for the circuit in any language. The prove function would then essentially have an additional argument: a partial function of type \texttt{string * [int] -> [int]}.
+Now, when proving a circuit, implementations for every function in the signature must also be provided. The exact form will depend on the language, but one can easily imagine implementing a function that takes a name and a list of arguments to compute the required output for the circuit in any language. The prove function would then essentially have an additional argument: a partial function of type \texttt{string * [int] -> [int]}.
 
-For languages lacking higher-order function support, a more complex approach may be needed, but this should not be a show-stopper in any case. While this system may present less convenience for certain examples compared to the current one, it compensates by offering full flexibility and potential  simplifications to the language. Requiring \VampIR{} to lean more towards a library than it currently does, as seen in practice within the Taiga\footnote{\url{https://github.com/anoma/taiga}} framework for shielded transactions.
+For languages lacking higher-order function support, a more complex approach may be needed, but this should not be a show-stopper in any case. While this system may present less convenience for certain examples compared to the current one, it compensates by offering full flexibility and potential simplifications to the language. Requiring \VampIR{} to lean more towards a library than it currently does, as seen in practice within the Taiga\footnote{\url{https://github.com/anoma/taiga}} framework for shielded transactions.
 
 \section{Proposal: Explicit constraints}
 \label{sec:explicit-constraints}
@@ -377,7 +377,6 @@ Additionally, separate from the actual circuit sent to Halo2 or Plonk, there wou
 
 The original designs of \VampIR{} are credited to X and Y.
 
-\nocite{*}
 \bibliography{ref.bib}
 
 \end{document}
