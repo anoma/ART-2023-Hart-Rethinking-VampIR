@@ -179,7 +179,7 @@ Some things never need to be evaluated; for example, an unapplied lambda express
 
 The nature of evaluation makes semantics somewhat nonintuitive. As a program is evaluated, it will output more and more constraints. There is no control over the constraints themselves as they are not manipulable objects of the language. Through the ability to ignore function calls, it is possible to prevent constraints from propagating (e.g. any constraint produced by \texttt{f} in \texttt{iter 0 f x}), but it is not always obvious when this will happen. The overall meaning of a program will be that, for a fixed set of public variables, there exists an assignment to the private variables such that the conjunction of all the constraints in $\chi$ is true. 
 
-\begin{remark}
+\begin{remark}\label{remark:semanatics-no-compositional}
 The evaluation process generates a global stack of constraints, denoted as $\chi$, through side effects, resulting in semantics that are not immediately compositional. However, due to the monoidal nature of conjunction, which makes the order of evaluation irrelevant, it is possible that compositional semantics could be recovered. Nevertheless, such semantics are not readily evident within the evaluation model.
 \end{remark}
 
@@ -199,14 +199,18 @@ The type system does not prevent exponentially sized circuits from occurring; ju
 
 Using lambda encodings for all data structures would allow essentially all the faculties of functional programming to be made available; from data structures to complex mutually recursive algorithms. As it stands, the type system filters this into a less useful subset than end users might otherwise want to use.
 
-\section{Proposal: Remove DSL and make fresh simpler}\label{sec:removal-dsl}
+\section{Proposal: Remove DSL and make \texttt{fresh} simpler}\label{sec:removal-dsl}
 
-The design of \VampIR{} has an understated issue related to 'fresh'. During evaluation, the body of 'fresh' is discarded, but \VampIR{} saves it as a method to determine the value of the newly generated variable. This design does not impact circuit semantics but serves as a convenience tool. Instead of users manually entering values for private variables, 'fresh' provides automatic calculation instructions. To aid this, 'fresh' utilizes a DSL, essentially an extended version of \VampIR{} with additional operations, like modulus, which are not easily represented in arithmetic circuits. This enables \say{fresh} to compute values, with subsequent constraints verifying the accuracy of these values.
+The design of \VampIR{} has an understated issue related to \texttt{fresh}. During evaluation, the body of \texttt{fresh} is discarded, but \VampIR{} saves it as a method to determine the value of the newly generated variable. This design does not impact circuit semantics but serves as a convenience tool. Instead of users manually entering values for private variables, \texttt{fresh} provides automatic calculation instructions. To aid this, \texttt{fresh} utilizes a DSL, essentially an extended version of \VampIR{} with additional operations, like modulus, which are not easily represented in arithmetic circuits. This enables \texttt{fresh} to compute values, with subsequent constraints verifying the accuracy of these values.
 
-So, what is the problem? The fact that fresh uses a manually created DSL means that users cannot use arbitrary programs to calculate the values that need to be filled with fresh. This has led to much discussion as to how or whether this language should be extended. It is not hard to imagine this discussion going on forever; adding new things whenever they come up. Alternatively, there is a path where we make the DSL computationally universal. But both of these would not even necessarily work, as the correct value for a private variable may need to be supplied by an oracle that cannot be implemented in a \VampIR{} program for whatever reason. This can be dealt with by declaring a private variable manually and submitting it at proof generation time. But this begs the question of why a fresh need to exist at all. If it is a reasonable feature of convenience, can it be made better?
+So, what is the problem? The fact that \texttt{fresh} uses a manually created DSL means that users cannot use arbitrary programs to calculate the values that need to be filled with \texttt{fresh}. This has led to much discussion as to how or whether this language should be extended. Two paths emerge: perpetual addition of new elements as they arise, or making the DSL computationally universal. However, both may not be viable solutions, as the correct value for a private variable may need to be supplied by an oracle that cannot be implemented in a \VampIR{} program.  A workaround is manual declaration and submission of a private variable at proof generation time. Yet, this raises the question of why a \texttt{fresh} need to exist at all. If it is a reasonable feature of convenience, can it be made better?
 
-My proposal is this: remove the DSL entirely and have fresh, just store a name and signature. Take this example of a typical usage of fresh;
+Considering this, we suggest the complete elimination of the DSL, allowing only
+\texttt{fresh} to store a name and signature. 
 
+\begin{example}\label{example:1}
+Consider the following as a
+typical example of \texttt{fresh} usage.
 
 \begin{minted}{python}
 def bool x = { x*(x-1) = 0; x };
@@ -224,7 +228,7 @@ def range5 a = {
 };
 \end{minted}
 
-Here, fresh is calculating a list of values, and those values are calculated using integer division and the modulus operation. My suggestion is that this be changed into something like the following;
+Here, \texttt{fresh} is calculating a list of values, and those values are calculated using integer division and the modulus operation. The suggestion is that this be changed into something like in the following program.
 
 \begin{minted}[style=borland]{python}
 def bool x = { x*(x-1) = 0; x };
@@ -241,12 +245,19 @@ def range5 a = {
 };
 \end{minted}
 
-When this program is compiled, it will also come with a list of named signatures representing functions that need implementation. This program will contain a signature named $\text{range5\_fr}$ that takes one argument and produces a list of five elements. The length may or may not be part of the signature, but the basic input and output types are. When proving a circuit, implementations for every function in the signature must also be provided. Exactly what this will look like will depend on the language, but one can easily imagine implementing a function that takes a name and a list of arguments and calculates the output as needed for the circuit in just about any language. The prove function would essentially have an additional argument which is a partial function of type string * [int] -> [int]. Some languages with no support for higher-order functions will need something more complicated, but this should not be a show-stopper in any case. This system would be less convenient for some examples than the current system, but it would allow full flexibility and allow some simplifications in the language. It would require having \VampIR{} lean more towards being a library than it currently does, but that is not necessarily a bad thing.
+Upon compilation, we expect the program above generates a list of named signatures, each representing a function requiring implementation. This program will contain a signature named \texttt{range5\_fr} that takes one argument and produces a list of five elements. The length may or may not be part of the signature, but the basic input and output types are. 
+\end{example}
+
+Now when proving a circuit, implementations for every function in the signature must also be provided. The exact form will depend on the language, but one can easily imagine implementing a function that takes a name and a list of arguments to compute the required output for the circuit in any language. The prove function would then essentially have an additional argument: a partial function of type \texttt{string * [int] -> [int]}.
+
+For languages lacking higher-order function support, a more complex approach may be needed, but this should not be a show-stopper in any case. While this system may present less convenience for certain examples compared to the current one, it compensates by offering full flexibility and potential  simplifications to the language. Requiring \VampIR{} to lean more towards a library than it currently does, as seen in practice within the Taiga\footnote{\url{https://github.com/anoma/taiga}} framework for shielded transactions.
 
 \section{Proposal: Explicit constraints}
 \label{sec:explicit-constraints}
 
-The difficulty in \VampIR{}'s semantics stems from its non-compositional nature. To fix this, we propose adding a type of constraint to the language. Lambda expressions should not generate constraints; rather, they should return sets of constraints. We propose the following modified language (note: this is leaving out things we may want to keep, but we are ignoring them for simplicity).
+The difficulty in \VampIR{}'s semantics stems from its non-compositional nature as discussed in~\Cref{remark:semanatics-no-compositional}. To fix this, we propose adding a type of constraint to the language. Lambda expressions should not generate constraints; rather, they should return sets of constraints.
+
+For simplicity, we propose a modified language, albeit omitting certain elements that may be desirable to retain.
 
 \begin{align*}
     \text{VampIR} ::=&\ \text{Arith} \\
@@ -288,14 +299,18 @@ and type-checking rules
 
 With these in place, we can give a sensible interpretation to any program of type $\mathbb{B}$; it will be, essentially, a set of constraints.
 
+\begin{figure}[H]
 \begin{align*}
-    [[ x = y ]] = \{x = y\}\\
-    [[ x \wedge y ]] = [[x]] \cup [[y]]\\
-    [[ (x1, x2) = (y1, y2) ]] = [[x1 = y1]] \cup [[x2 = y2]]\\
-    ...
+    \evalT{x = y} &:\equiv \{x = y\}\\
+    \evalT{x \wedge y} &:\equiv \eval{x} \cup \eval{y}\\
+    \evalT{(p, q) = (r, s)} &:\equiv \evalT{p = r} \cup \evalT{q = s}\\
+    &\\vdots
 \end{align*}
+\caption{Evaluation semantics for \VampIR{} with explicit constraints.}
+\label{fig:evaluation-semantics}
+\end{figure}
 
-By having functions return an explicit set of constraints, we don't need to worry about procedural order, etc. This will make function types more complicated, but it will also make them more intuitive. For example
+By having functions return an explicit set of constraints, we do not need to worry about procedural order, etc. This will make function types more complicated, but it will also make them more intuitive. For example.
 
 \begin{minted}[style=borland]{python}
 def bool x = { x*(x-1) = 0; x };
@@ -360,8 +375,7 @@ Additionally, separate from the actual circuit sent to Halo2 or Plonk, there wou
 
 \section{Acknowledgements}
 
-\VampIR{} original designs is due to X and Y. 
- 
+The original designs of \VampIR{} are credited to X and Y.
 
 \nocite{*}
 \bibliography{ref.bib}
