@@ -14,7 +14,7 @@
 
 \section{Introduction}
 
-\VampIR{} serves as a language for constructing arithmetic circuits on finite fields~\citep{anoma-vampir}, designed to be a universal intermediate language for numerous proof systems based on arithmetic circuits such as Halo2\footnote{\url{https://zcash.github.io/halo2/}}. Higher-level languages, such as Juvix~\citep{anoma-juvix}, which compile to arithmetic circuits, can employ \VampIR{} as an intermediary.
+\VampIR{} serves as a language for constructing arithmetic circuits on finite fields~\citep{anoma-vampir,vamp-ir-book}, designed to be a universal intermediate language for numerous proof systems based on arithmetic circuits such as Halo2\footnote{\url{https://zcash.github.io/halo2/}}. Higher-level languages, such as Juvix~\citep{anoma-juvix}, which compile to arithmetic circuits, can employ \VampIR{} as an intermediary.
 
 The necessity for an intermediate language is evident. Without one, each desired proof system must be individually supported by the systems. However, with an adequate intermediate representation, the total workload required to establish the ecosystem remains linear. Languages can target the intermediate representation rather than a specific proof system, thereby gaining support for every proof system targeted by this intermediate representation.
 
@@ -250,7 +250,7 @@ Upon compilation, we expect the program above generates a list of named signatur
 
 Now, when proving a circuit, implementations for every function in the signature must also be provided. The exact form will depend on the language, but one can easily imagine implementing a function that takes a name and a list of arguments to compute the required output for the circuit in any language. The prove function would then essentially have an additional argument: a partial function of type \texttt{string * [int] -> [int]}.
 
-For languages lacking higher-order function support, a more complex approach may be needed, but this should not be a show-stopper in any case. While this system may present less convenience for certain examples compared to the current one, it compensates by offering full flexibility and potential simplifications to the language. Requiring \VampIR{} to lean more towards a library than it currently does, as seen in practice within the Taiga\footnote{\url{https://github.com/anoma/taiga}} framework for shielded transactions.
+For languages lacking higher-order function support, a more complex approach may be needed, but this should not be a show-stopper in any case. While this system may present less convenience for certain examples compared to the current one, it compensates by offering full flexibility and potential simplifications to the language. Requiring \VampIR{} to lean more towards a library than it currently does, as seen in practice within the Taiga\footnote{\url{https://github.com/anoma/taiga}.} framework for shielded transactions.
 
 \section{Proposal: Explicit constraints}
 \label{sec:explicit-constraints}
@@ -263,6 +263,11 @@ For simplicity, we propose a modified language, albeit omitting certain elements
 \begin{figure}[!htb]
 \begin{equation*}
 \begin{array}{rclr}
+    \text{Type} &::= &v &\\
+    &| &\text{Type} \ \xrightarrow{} \ \text{Type}  & \\
+    &| &\text{Type} \ \times \ \text{Type}  & \\
+    &| &\mathbb{B}  & \\
+    &| &\mathbb{F}  & \\[4mm]
     \text{VampIR} &::=  &\text{Arith} &\\
     &|   &\text{VampIR} \ = \ \text{VampIR} &\\
     &|   &\text{VampIR} \wedge \text{VampIR} &\\
@@ -278,23 +283,10 @@ For simplicity, we propose a modified language, albeit omitting certain elements
     \text{v} &\in  &\text{string} &
 \end{array}
 \end{equation*}
-\caption{\VampIR{} syntax grammar.}
-\label{fig:grammar}
+\caption{Modified \VampIR{} syntax grammar for Explicit constraints' proposal.}
+\label{fig:modified-grammar}
 \end{figure}
 
-\begin{figure}[!htb]
-\begin{equation*}
-\begin{array}{rclr}
-    \text{Type} &::= &v &\\
-    &| &\text{Type} \ \xrightarrow{} \ \text{Type}  & \\
-    &| &\text{Type} \ \times \ \text{Type}  & \\
-    &| &\mathbb{B}  & \\
-    &| &\mathbb{F}  & \\
-\end{array}
-\end{equation*}
-\caption{Modified \VampIR{} syntax grammar.}
-\label{fig:grammar}
-\end{figure}
 
 \begin{figure}[!htb]
 \centering
@@ -314,7 +306,7 @@ For simplicity, we propose a modified language, albeit omitting certain elements
 \end{tabular}
 }
 \end{spacing}
-\caption{Modified \VampIR{} typing rules.}
+\caption{Modified \VampIR{} typing rules for Explicit constraints' proposal. $U$ and $T$ are types as in~\Cref{fig:modified-grammar}.}
 \label{fig:grammar}
 \end{figure}
 
@@ -374,15 +366,17 @@ My preferred approach is this: There should be two kinds of \VampIR{} files; one
 
 \section{\VampIR{} Haskell}\label{sec:vamp-ir-haskell}
 
-Recently, a port of \VampIR{} from Rust into Haskell was started. As part of this, many important implementation differences have been made. This section will briefly summarize them.
+We port \VampIR{} from Rust into Haskell in~\citep{vamp-ir-haskell}. There are significant differences in this \VampIR{} implementation, which we briefly summarize in this section.
 
-In the original implementation of \VampIR{}, parsing was done through a PEG grammar. There was a .pest file which was then used to define a datatype in which parsed modules were stored. The Haskell implementation uses parser combinators as provided by the Megaparsec library. This significantly reduces the parsing code from over a thousand lines in Rust to less than 200 in Haskell. This is far more maintainable. In the original implementation of \VampIR{}, there were periodic stack overflows when certain files were parsed; it is not clear at this point if the parser combinators will be more efficient in this respect.
+In the original implementation of \VampIR{}, parsing was done through a PEG grammar. There was a \texttt{.pest} file which was then used to define a datatype in which parsed modules were stored. The Haskell implementation uses parser combinators as provided by the Megaparsec library. This significantly reduces the parsing code from over a thousand lines in Rust to less than 200 in Haskell. This is far more maintainable. In the original implementation of \VampIR{}, there were periodic stack overflows when certain files were parsed; it is not clear at this point if the parser combinators will be more efficient in this respect.
 
-The original version of \VampIR{} parsed everything into the same format used for computation. The Haskell implementation has a separation between a simpler "core" language and a more complicated type representing \VampIR{} ASTs. This allows things like pattern matching to be removed prior to evaluation or type checking. This also allows the core expressions to use higher-order abstract syntax, allowing us to reuse Haskell's binding features instead of implementing them anew.
+The original \VampIR{} compiler parses everything into the same format used for computation. The Haskell implementation has a separation between a simpler \say{core} language and a more complicated type representing \VampIR{} ASTs. This allows things like pattern matching to be removed prior to evaluation or type checking. This also allows the core expressions to use higher-order abstract syntax, allowing us to reuse Haskell's binding features instead of implementing them anew.
 
-In the original version of \VampIR{}, all expression constructors were wrapped in a type annotation. These annotations were blank by default, and only filled during type checking. After type checking, these annotations were removed, but the wrappers themselves were always present. This made the language data types more complicated than necessary, and type annotations themselves are simply not necessary since \VampIR{}'s type system is simple enough that a most general type can always be efficiently inferred. The type checker in the Haskell implementation infers the most general type, and attempts unification to check for valid types.
+In the original \VampIR{}, all expression constructors are wrapped in a type annotation, which were blank by default and filled only during type checking. Post type-checking, these annotations were discarded, yet the wrappers persisted. This unnecessarily complicated the language data types, as the type annotations themselves were not required. Remember that,
+as discussed in~\Cref{sec:removal-type-system}, 
+\VampIR{}'s type system is simple enough that a most general type can always be efficiently inferred. The type checker in the Haskell implementation infers the most general type, and attempts unification to check for valid types.
 
-In the original, compiled \VampIR{} circuits came equipped with a large dictionary of definitions that told the system how to calculate intermediate circuit values. As an example, an expression like;
+Originally, compiled \VampIR{} came equipped with a large dictionary of definitions that told the system how to calculate intermediate circuit values. As an example, an expression like;
 
 \begin{minted}[style=borland]{python}
 x + (y * z) = 2
@@ -392,11 +386,16 @@ would be turned into something like
 x + v = 2
 v = y * z
 \end{minted}
-Additionally, separate from the actual circuit sent to Halo2 or Plonk, there would be a definition telling the system that v's value can be calculated by multiplying y and z. This is both obviously redundant and significantly complicates things like optimization as one needs to keep track of not just the circuit, but also ancillary definitions. The Haskell implementation uses constraint propagation to infer what values unassigned variables must take based on the 3ac constraints they are a part of. Any values which could have been inferred by simply evaluating the circuits can also be inferred like this, with no change in asymptotic efficiency. This would also significantly simplify any future optimization work, although the Haskell implementation currently does not do any optimization.
+
+Additionally, separate from the actual circuit sent to Halo2 or Plonk, there would be a definition instructing the system that the
+value of \texttt{v} can be calculated by multiplying \texttt{y} and \texttt{z}. This redundancy significantly complicates the process, such as optimization, as one needs to keep track of not just the circuit, but also ancillary definitions. In contrast, the Haskell implementation uses \emph{constraint propagation} to infer the required values for unassigned variables based on their involvement in the \textsf{3ac} constraints. Any values which could be inferred through simple circuit evaluation can similarly be inferred this way, with no change in asymptotic efficiency. This approach would also significantly simplify any future optimization work, although the current Haskell implementation does not perform any optimization.
 
 \section{Acknowledgements}
 
-The original designs of \VampIR{} are credited to X and Y.
+The \VampIR{} language and compiler were initially developed by Joshua Fitzgerald and Wei Dai, members of the original \VampIR{} team at Heliax. The subsequent compiler development and language modifications to reach its current state, as described in this report, were carried out by Joshua Fitzgerald, Murisi Tarusenga, Carlo Modica, the author of this report, and other GitHub contributors. Special thanks to the
+\Juvix{} team for reporting bugs, providing feedback, and improving overall the GitHub repository, particularly Paul Cadman on the latest feature additions.
+
+Thanks are extended to Jonathan Prieto-Cubides for reviewing and improving the parts of this report, and also to Lukasz Czajka for his feedback.
 
 \bibliography{ref.bib}
 
