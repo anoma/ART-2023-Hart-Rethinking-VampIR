@@ -33,10 +33,9 @@ its syntax could be described as in~\Cref{fig:grammar}.
 \begin{figure}[!htb]
 \begin{equation*}
 \begin{array}{rclr}
-    \text{VampIR} &::= &\text{Arith} &\text{XXX}\\
-    &| &(\text{VampIR} \ = \ \text{VampIR}) &\\
+    \text{VampIR} &::= &(\text{VampIR} \ = \ \text{VampIR}) &\\
     &| &(\text{VampIR};\ \text{VampIR}) &\\
-    &| &() &\text{XXX}\\
+    &| &() &\\
     &| &(\text{VampIR},\ \text{VampIR}) &\\
     &| &\text{fst}\ |\ \text{snd} &\\
     &| &\text{VampIR}:: \text{VampIR}\ |\ [] &\\
@@ -45,7 +44,7 @@ its syntax could be described as in~\Cref{fig:grammar}.
     &| &\text{iter}\ n\ \text{VampIR} &\\
     &| &\text{fold}\ \text{VampIR}\ \text{VampIR}\ \text{VampIR} &\\
     &| &\lambda v . \text{VampIR} &\\
-    &| &\text{VampIR}\ \text{VampIR} &\\
+    &| &(\text{VampIR}\ \text{VampIR}) &\\
     &| &\text{VampIR} \ \text{op} \ \text{VampIR} &\\
     &| &- \text{VampIR}\ |\ f\ |\ v &\\[2mm]
     \text{op} &::= &+ \,|\, \times \,|\, - \,|\, / &\\
@@ -268,13 +267,12 @@ For simplicity, we propose a modified language, albeit omitting certain elements
     &| &\text{Type} \ \times \ \text{Type}  & \\
     &| &\mathbb{B}  & \\
     &| &\mathbb{F}  & \\[4mm]
-    \text{VampIR} &::=  &\text{Arith} &\\
-    &|   &\text{VampIR} \ = \ \text{VampIR} &\\
+    \text{VampIR} &::=  &(\text{VampIR} \ = \ \text{VampIR}) &\\
     &|   &\text{VampIR} \wedge \text{VampIR} &\\
     &|   &\text{Type} \ \times \ \text{Type} &\\
     &|   &\lambda v . \text{VampIR} &\\
-    &|   &\text{VampIR}\ \text{VampIR} &\\
-    &|   &\text{VampIR} \ \textsf{op} \ \text{VampIR} &\\
+    &|   &(\text{VampIR}\ \text{VampIR}) &\\
+    &|   &(\text{VampIR} \ \textsf{op} \ \text{VampIR}) &\\
     &|  &- \text{VampIR} &\\
     &|  &f  & \\
     &|  &v &\\[2mm]
