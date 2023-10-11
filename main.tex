@@ -160,7 +160,7 @@ The correctness of evaluation requires the term to be well-typed, assuming that,
     \evalT{ \text{hd}\ (x::l)} &:\equiv &\evalT{x} &\\
     \evalT{ \text{tl}\ (x::l)} &:\equiv &\evalT{l} &\\
     \evalT{ \text{fold}\ n\ f\ []} &:\equiv &\evalT{n} &\\
-    \evalT{ \text{fold}\ n\ f\ (x::l)} &:\equiv &\evalT{n\ x\ (\text{fold}\ n\ f\ l)} &\\
+    \evalT{ \text{fold}\ n\ f\ (x::l)} &:\equiv &\evalT{f\ x\ (\text{fold}\ n\ f\ l)} &\\
     \evalT{ (p,\ q) = (r,\ s)} &:\equiv &\evalT{p = r}; \evalT{q = s}\\
     \evalT{ (x :: l ) = (y :: l')} &:\equiv &\evalT{x = y}; \evalT{l = l'}\\
     \evalT{ x = y} &:\equiv &\evalT{\,\evalT{x} = \evalT{y}\,}, &(x, y : 1st, \text{but not}\ x, y : \mathbb{F})\\ 
